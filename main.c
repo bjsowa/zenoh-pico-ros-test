@@ -6,11 +6,11 @@
 
 #include "zenoh-pico.h"
 
+#include "geometry_msgs/msg/twist.h"
 #include "rmw/types.h"
 #include "rosidl_runtime_c/message_type_support_struct.h"
 #include "rosidl_typesupport_microxrcedds_c/identifier.h"
 #include "rosidl_typesupport_microxrcedds_c/message_type_support.h"
-#include "std_msgs/msg/bool.h"
 #include "ucdr/microcdr.h"
 
 #define MAX_TOPIC_KEYEXPR_SIZE 250
@@ -18,7 +18,7 @@
 
 const uint8_t cdr_encapsulation[] = {0, 1, 0, 0};
 
-std_msgs__msg__Bool my_bool;
+geometry_msgs__msg__Twist twist;
 
 bool create_topic_keyexpr_c_str(const size_t domain_id,
                                 const char *const topic_name,
@@ -37,12 +37,13 @@ bool create_topic_keyexpr_c_str(const size_t domain_id,
 
 int main(int argc, char **argv) {
 
-  std_msgs__msg__Bool__init(&my_bool);
+  geometry_msgs__msg__Twist__init(&twist);
 
-  my_bool.data = true;
+  twist.linear.x = 5.0;
+  twist.angular.z = 10.0;
 
   const rosidl_message_type_support_t *type_support =
-      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool);
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist);
 
   const rosidl_message_type_support_t *type_support_xrce =
       get_message_typesupport_handle(
@@ -73,17 +74,16 @@ int main(int argc, char **argv) {
 
   uint32_t serialized_size =
       CDR_ENCAPSULATION_SIZE +
-      type_support_callbacks->get_serialized_size((const void *)&my_bool);
+      type_support_callbacks->get_serialized_size((const void *)&twist);
 
   uint8_t message_buffer[serialized_size];
 
-  // printf("%d\n", type_support_callbacks->max_serialized_size());
   memcpy(message_buffer, cdr_encapsulation, CDR_ENCAPSULATION_SIZE);
 
-  ucdr_init_buffer_origin_offset(&ub, message_buffer, serialized_size, 0,
-                                 CDR_ENCAPSULATION_SIZE);
+  ucdr_init_buffer(&ub, &message_buffer[CDR_ENCAPSULATION_SIZE],
+                   serialized_size - CDR_ENCAPSULATION_SIZE);
 
-  type_support_callbacks->cdr_serialize((const void *)&my_bool, &ub);
+  type_support_callbacks->cdr_serialize((const void *)&twist, &ub);
 
   for (int i = 0; i < serialized_size; ++i) {
     printf("%u ", message_buffer[i]);
