@@ -14,6 +14,9 @@
 #include "ucdr/microcdr.h"
 
 #define MAX_TOPIC_KEYEXPR_SIZE 250
+#define CDR_ENCAPSULATION_SIZE 4
+
+const uint8_t cdr_encapsulation[] = {0, 1, 0, 0};
 
 std_msgs__msg__Bool my_bool;
 
@@ -69,12 +72,16 @@ int main(int argc, char **argv) {
   ucdrBuffer ub;
 
   uint32_t serialized_size =
+      CDR_ENCAPSULATION_SIZE +
       type_support_callbacks->get_serialized_size((const void *)&my_bool);
 
   uint8_t message_buffer[serialized_size];
 
   // printf("%d\n", type_support_callbacks->max_serialized_size());
-  ucdr_init_buffer(&ub, message_buffer, serialized_size);
+  memcpy(message_buffer, cdr_encapsulation, CDR_ENCAPSULATION_SIZE);
+
+  ucdr_init_buffer_origin_offset(&ub, message_buffer, serialized_size, 0,
+                                 CDR_ENCAPSULATION_SIZE);
 
   type_support_callbacks->cdr_serialize((const void *)&my_bool, &ub);
 
@@ -121,8 +128,10 @@ int main(int argc, char **argv) {
 
   z_owned_bytes_map_t map = z_bytes_map_new();
   z_bytes_map_insert_by_copy(&map, z_bytes_from_str("source_gid"), gid_bytes);
-  z_bytes_map_insert_by_copy(&map, z_bytes_from_str("source_timestamp"), z_bytes_from_str("1"));
-  z_bytes_map_insert_by_copy(&map, z_bytes_from_str("sequence_number"), z_bytes_from_str("1"));
+  z_bytes_map_insert_by_copy(&map, z_bytes_from_str("source_timestamp"),
+                             z_bytes_from_str("1"));
+  z_bytes_map_insert_by_copy(&map, z_bytes_from_str("sequence_number"),
+                             z_bytes_from_str("1"));
 
   printf("Press CTRL-C to quit...\n");
   for (int idx = 0; idx < 100; ++idx) {
