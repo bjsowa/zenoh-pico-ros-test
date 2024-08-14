@@ -24,7 +24,6 @@ find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosidl_runtime_c REQUIRED)
 find_package(rosidl_typesupport_microxrcedds_c REQUIRED)
-find_package(zenohpico_vendor REQUIRED)
 find_package(zenohpico REQUIRED)
 
 # Hack to make zenohpico::static target work
