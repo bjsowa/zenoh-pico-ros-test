@@ -55,6 +55,13 @@ def main():
     print("--> Building colcon workspace...")
 
     colcon_ignore_packages = [
+        "lttngpy",
+        "rcl_action",
+        "rcl_lifecycle",
+        "rcl_logging_noop",
+        "rcl_logging_spdlog",
+        "rcl_yaml_param_parser",
+        "ros2trace",
         "rosidl_cli",
         "rosidl_generator_cpp",
         "rosidl_runtime_cpp",
@@ -67,7 +74,17 @@ def main():
         "rosidl_typesupport_microxrcedds_test_msg",
         "rosidl_typesupport_tests",
         "test_msgs",
+        "test_rmw_implementation",
+        "test_ros2trace",
+        "test_tracetools",
+        "test_tracetools_launch",
+        "tracetools_launch",
+        "tracetools_read",
+        "tracetools_test",
+        "tracetools_trace",
     ]
+
+    os.environ["RMW_IMPLEMENTATION"] = "rmw_zenohpico_c"
 
     colcon_build_cmd = [
         "colcon",
@@ -81,6 +98,7 @@ def main():
         "--no-warn-unused-cli",
         "-DBUILD_SHARED_LIBS=OFF",
         "-DBUILD_TESTING=OFF",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
         f"-DCMAKE_BUILD_TYPE={build_type}",
         f"-DCMAKE_VERBOSE_MAKEFILE={verbose_makefile}",
         # f"-DCMAKE_TOOLCHAIN_FILE={toolchain_path}",

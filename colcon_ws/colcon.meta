@@ -1,5 +1,12 @@
 {
     "names": {
+        "rcl": {
+            "cmake-args": [
+                "-DBUILD_TESTING=OFF",
+                "-DRCL_COMMAND_LINE_ENABLED=OFF",
+                "-DRCL_LOGGING_ENABLED=OFF"
+            ]
+        },
         "rcutils": {
             "cmake-args": [
                 "-DRCUTILS_NO_FILESYSTEM=ON",
@@ -13,5 +20,16 @@
                 "-DROSIDL_TYPESUPPORT_SINGLE_TYPESUPPORT=ON"
             ]
         },
+        "tracetools": {
+            "cmake-args": [
+                "-DTRACETOOLS_DISABLED=ON",
+                "-DTRACETOOLS_STATUS_CHECKING_TOOL=OFF"
+            ]
+        },
+        "zenoh_pico": {
+            "cmake-args": [
+                "-DBUILD_EXAMPLES=OFF"
+            ]
+        }
     }
 }
