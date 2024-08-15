@@ -26,21 +26,16 @@ find_package(rosidl_runtime_c REQUIRED)
 find_package(rosidl_typesupport_microxrcedds_c REQUIRED)
 find_package(zenohpico REQUIRED)
 
-# Hack to make zenohpico::static target work
-get_target_property(ZENOHPICO_INCLUDES zenohpico::lib INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(__zenohpico_static INTERFACE ${ZENOHPICO_INCLUDES})
-set_property(TARGET __zenohpico_static PROPERTY IMPORTED_LOCATION ${ZENOHPICO_INCLUDES}/../lib/libzenohpico.a)
-
-add_executable(zenoh-pico-ros
-  main.c
+add_executable(pub_sub_test
+  src/pub_sub_test.c
 )
 
-ament_target_dependencies(zenoh-pico-ros
+ament_target_dependencies(pub_sub_test
   geometry_msgs
 )
 
-target_link_libraries(zenoh-pico-ros
+target_link_libraries(pub_sub_test
   rosidl_runtime_c::rosidl_runtime_c
   rosidl_typesupport_microxrcedds_c::rosidl_typesupport_microxrcedds_c
-  zenohpico::static
+  zenohpico::zenohpico
 )
