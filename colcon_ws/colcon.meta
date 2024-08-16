@@ -2,7 +2,6 @@
     "names": {
         "rcl": {
             "cmake-args": [
-                "-DBUILD_TESTING=OFF",
                 "-DRCL_COMMAND_LINE_ENABLED=OFF",
                 "-DRCL_LOGGING_ENABLED=OFF"
             ]
@@ -13,11 +12,6 @@
                 "-DRCUTILS_NO_THREAD_SUPPORT=ON",
                 "-DRCUTILS_NO_64_ATOMIC=ON",
                 "-DRCUTILS_AVOID_DYNAMIC_ALLOCATION=ON"
-            ]
-        },
-        "rosidl_typesupport": {
-            "cmake-args": [
-                "-DROSIDL_TYPESUPPORT_SINGLE_TYPESUPPORT=ON"
             ]
         },
         "tracetools": {
