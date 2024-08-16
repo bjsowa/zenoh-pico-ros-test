@@ -3,7 +3,7 @@ repositories:
   ament_cmake:
     type: git
     url: https://github.com/ament/ament_cmake.git
-    version: 2.4.0
+    version: 2.5.2
   ament_cmake_ros:
     type: git
     url: https://github.com/ros2/ament_cmake_ros.git
@@ -16,18 +16,18 @@ repositories:
   # ROS utilities
   rcutils:
     type: git
-    url: https://github.com/fictionlab/rcutils.git
-    version: a2cbd84
+    url: https://github.com/ros2/rcutils.git
+    version: 6.7.1
   ros2_tracing:
     type: git
     url: https://github.com/ros2/ros2_tracing.git
-    version: 8.1.0
+    version: 8.2.1
 
   # ROS IDL packages
   rosidl:
     type: git
     url: https://github.com/ros2/rosidl.git
-    version: 4.5.2
+    version: 4.6.3
   rosidl_core:
     type: git
     url: https://github.com/ros2/rosidl_core.git
@@ -43,27 +43,27 @@ repositories:
   rosidl_typesupport:
     type: git
     url: https://github.com/fictionlab/rosidl_typesupport.git
-    version: 9e3abf7
+    version: 23f15cd
   rosidl_typesupport_microxrcedds:
     type: git
     url: https://github.com/micro-ROS/rosidl_typesupport_microxrcedds.git
-    version: 5.0.0
+    version: 5.0.1
 
   # ROS middleware
   rmw:
     type: git
     url: https://github.com/ros2/rmw.git
-    version: 7.3.0
+    version: 7.3.1
   rmw_implementation:
     type: git
     url: https://github.com/ros2/rmw_implementation.git
-    version: 2.15.1
+    version: 2.15.3
 
   # ROS client libraries
   rcl:
     type: git
     url: https://github.com/fictionlab/rcl.git
-    version: 7b4d0fd
+    version: eacfc85
   rcl_logging:
     type: git
     url: https://github.com/ros2/rcl_logging.git
@@ -87,8 +87,8 @@ repositories:
   rcl_interfaces:
     type: git
     url: https://github.com/ros2/rcl_interfaces.git
-    version: 2.0.1
+    version: 2.0.2
   common_interfaces:
     type: git
     url: https://github.com/ros2/common_interfaces.git
-    version: 5.3.1
+    version: 5.3.5
