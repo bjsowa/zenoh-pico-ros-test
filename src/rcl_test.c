@@ -4,11 +4,13 @@
 #include "rcl/init.h"
 #include "rcl/node.h"
 
-#define RCCHECK(ret)                                                                         \
-  {                                                                                          \
-    if (((ret) != RCL_RET_OK)) {                                                             \
-      printf("Failed status on line %d in file %s: %d. Aborting.", __LINE__, __FILE__, ret); \
-    }                                                                                        \
+#define RCCHECK(ret)                                                                           \
+  {                                                                                            \
+    if (((ret) != RCL_RET_OK)) {                                                               \
+      const rcutils_error_state_t* error_state = rcutils_get_error_state();                    \
+      printf("Failed status on line %d in file %s: %d. Aborting.\n", __LINE__, __FILE__, ret); \
+      printf("%s\n", error_state->message);                                                    \
+    }                                                                                          \
   }
 
 rcl_allocator_t allocator;
