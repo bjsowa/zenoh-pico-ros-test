@@ -1,3 +1,6 @@
 [submodule "colcon_ws/extra_packages/rmw_zenohpico"]
 	path = colcon_ws/extra_packages/rmw_zenohpico
 	url = git@github.com:bjsowa/rmw_zenohpico.git
+[submodule "colcon_ws/extra_packages/zenoh-pico"]
+	path = colcon_ws/extra_packages/zenoh-pico
+	url = github.com:bjsowa/zenoh-pico.git
