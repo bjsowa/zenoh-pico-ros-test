@@ -56,11 +56,13 @@ def main():
 
     colcon_ignore_packages = [
         "lttngpy",
-        "rcl_action",
         "rcl_lifecycle",
         "rcl_logging_noop",
         "rcl_logging_spdlog",
         "rcl_yaml_param_parser",
+        "rclc_examples",
+        "rclc_lifecycle",
+        "rclc_parameter",
         "ros2trace",
         "rosidl_cli",
         "rosidl_generator_cpp",

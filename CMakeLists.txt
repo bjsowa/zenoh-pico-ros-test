@@ -23,9 +23,11 @@ set(ENV{PYTHONPATH} "${PYTHONPATH}")
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rcl REQUIRED)
+find_package(rclc REQUIRED)
 find_package(rmw_zenohpico_c REQUIRED)
 find_package(rosidl_runtime_c REQUIRED)
 find_package(rosidl_typesupport_microxrcedds_c REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(zenohpico_vendor REQUIRED)
 find_package(zenohpico REQUIRED)
 
@@ -47,6 +49,12 @@ add_executable(rcl_test
   src/rcl_test.c
 )
 
+ament_target_dependencies(rcl_test
+  std_msgs
+  geometry_msgs
+)
+
 target_link_libraries(rcl_test
   rcl::rcl
+  rclc::rclc
 )
