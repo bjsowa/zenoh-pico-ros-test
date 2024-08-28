@@ -26,24 +26,9 @@ find_package(rcl REQUIRED)
 find_package(rclc REQUIRED)
 find_package(rmw_zenohpico_c REQUIRED)
 find_package(rosidl_runtime_c REQUIRED)
-find_package(rosidl_typesupport_microxrcedds_c REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(zenohpico_vendor REQUIRED)
 find_package(zenohpico REQUIRED)
-
-add_executable(pub_sub_test
-  src/pub_sub_test.c
-)
-
-ament_target_dependencies(pub_sub_test
-  geometry_msgs
-)
-
-target_link_libraries(pub_sub_test
-  rosidl_runtime_c::rosidl_runtime_c
-  rosidl_typesupport_microxrcedds_c::rosidl_typesupport_microxrcedds_c
-  zenohpico::zenohpico
-)
 
 add_executable(rcl_test
   src/rcl_test.c
