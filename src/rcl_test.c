@@ -23,6 +23,7 @@ rcl_node_options_t node_options;
 // rclc_executor_t executor;
 rcl_publisher_t ping_publisher;
 geometry_msgs__msg__Twist twist_msg;
+rcl_subscription_t twist_sub;
 // rcl_timer_t ping_timer;
 // rcl_wait_set_t wait_set;
 
@@ -48,6 +49,7 @@ int main() {
   init_options = rcl_get_zero_initialized_init_options();
   node = rcl_get_zero_initialized_node();
   node_options = rcl_node_get_default_options();
+  twist_sub = rcl_get_zero_initialized_subscription();
   // executor = rclc_executor_get_zero_initialized_executor();
   // ping_timer = rcl_get_zero_initialized_timer();
   // wait_set = rcl_get_zero_initialized_wait_set();
@@ -61,11 +63,20 @@ int main() {
   RCCHECK(rclc_publisher_init_best_effort(
       &ping_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "ping"))
 
+  RCCHECK(rclc_subscription_init_default(
+      &twist_sub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "~/sub"));
+
   geometry_msgs__msg__Twist__init(&twist_msg);
   twist_msg.linear.x = 20.0;
 
   while (true) {
     RCCHECK(rcl_publish(&ping_publisher, &twist_msg, NULL))
+    sleep(1);
+    if (rcl_take(&twist_sub, &twist_msg, NULL, NULL) != RMW_RET_OK) {
+      rcutils_error_string_t error_str = rcutils_get_error_string();
+      rcutils_reset_error();
+      printf("Failed to take message: %s\n", error_str.str);
+    }
     sleep(1);
   }
 
