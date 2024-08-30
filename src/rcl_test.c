@@ -4,6 +4,7 @@
 #include "rclc/executor.h"
 #include "rclc/rclc.h"
 // #include "std_msgs/msg/string.h"
+#include "example_interfaces/srv/add_two_ints.h"
 #include "geometry_msgs/msg/twist.h"
 
 #define RCCHECK(RCL_COMMAND)                                                                   \
@@ -24,6 +25,7 @@ rcl_node_options_t node_options;
 rcl_publisher_t ping_publisher;
 geometry_msgs__msg__Twist twist_msg;
 rcl_subscription_t twist_sub;
+rcl_client_t add_two_ints_client;
 // rcl_timer_t ping_timer;
 // rcl_wait_set_t wait_set;
 
@@ -50,6 +52,7 @@ int main() {
   node = rcl_get_zero_initialized_node();
   node_options = rcl_node_get_default_options();
   twist_sub = rcl_get_zero_initialized_subscription();
+  add_two_ints_client = rcl_get_zero_initialized_client();
   // executor = rclc_executor_get_zero_initialized_executor();
   // ping_timer = rcl_get_zero_initialized_timer();
   // wait_set = rcl_get_zero_initialized_wait_set();
@@ -65,6 +68,10 @@ int main() {
 
   RCCHECK(rclc_subscription_init_default(
       &twist_sub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "~/sub"));
+
+  RCCHECK(rclc_client_init_default(&add_two_ints_client, &node,
+                                   ROSIDL_GET_SRV_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts),
+                                   "/add_two_ints"));
 
   geometry_msgs__msg__Twist__init(&twist_msg);
   twist_msg.linear.x = 20.0;
