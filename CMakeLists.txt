@@ -21,6 +21,7 @@ set(ENV{AMENT_PREFIX_PATH} "${AMENT_PREFIX_PATH}")
 set(ENV{PYTHONPATH} "${PYTHONPATH}")
 
 find_package(ament_cmake REQUIRED)
+find_package(example_interfaces REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rcl REQUIRED)
 find_package(rclc REQUIRED)
@@ -35,6 +36,7 @@ add_executable(rcl_test
 )
 
 ament_target_dependencies(rcl_test
+  example_interfaces
   std_msgs
   geometry_msgs
 )
