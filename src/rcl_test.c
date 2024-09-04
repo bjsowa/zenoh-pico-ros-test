@@ -28,6 +28,10 @@ rcl_subscription_t twist_sub;
 rcl_client_t add_two_ints_client;
 // rcl_timer_t ping_timer;
 // rcl_wait_set_t wait_set;
+example_interfaces__srv__AddTwoInts_Request req;
+example_interfaces__srv__AddTwoInts_Response res;
+
+rcl_service_t service;
 
 void ping_timer_callback(rcl_timer_t* timer, int64_t last_call_time) {
   printf("ping\n");
@@ -56,6 +60,7 @@ int main() {
   // executor = rclc_executor_get_zero_initialized_executor();
   // ping_timer = rcl_get_zero_initialized_timer();
   // wait_set = rcl_get_zero_initialized_wait_set();
+  service = rcl_get_zero_initialized_service();
 
   RCCHECK(rcl_init_options_init(&init_options, allocator))
   RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator))
@@ -63,29 +68,65 @@ int main() {
 
   printf("Node initialized!\n");
 
-  RCCHECK(rclc_publisher_init_best_effort(
-      &ping_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "ping"))
+  // RCCHECK(rclc_publisher_init_best_effort(
+  // &ping_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "ping"))
 
-  RCCHECK(rclc_subscription_init_default(
-      &twist_sub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "~/sub"));
+  // RCCHECK(rclc_subscription_init_default(
+  // &twist_sub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "~/sub"));
 
-  RCCHECK(rclc_client_init_default(&add_two_ints_client, &node,
-                                   ROSIDL_GET_SRV_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts),
-                                   "/add_two_ints"));
+  // RCCHECK(rclc_client_init_default(&add_two_ints_client, &node,
+  //                                  ROSIDL_GET_SRV_TYPE_SUPPORT(example_interfaces, srv,
+  //                                  AddTwoInts),
+  //                                  "/add_two_ints"));
 
-  geometry_msgs__msg__Twist__init(&twist_msg);
-  twist_msg.linear.x = 20.0;
+  example_interfaces__srv__AddTwoInts_Request__init(&req);
+  example_interfaces__srv__AddTwoInts_Response__init(&res);
+  RCCHECK(rclc_service_init_default(
+      &service, &node, ROSIDL_GET_SRV_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts),
+      "add_two_ints"));
 
   while (true) {
-    RCCHECK(rcl_publish(&ping_publisher, &twist_msg, NULL))
     sleep(1);
-    if (rcl_take(&twist_sub, &twist_msg, NULL, NULL) != RMW_RET_OK) {
+    rmw_request_id_t request_id;
+    if (rcl_take_request(&service, &request_id, &req) != RMW_RET_OK) {
       rcutils_error_string_t error_str = rcutils_get_error_string();
       rcutils_reset_error();
-      printf("Failed to take message: %s\n", error_str.str);
+      printf("Failed to take request: %s\n", error_str.str);
+    } else {
+      printf("Received request\n");
+      res.sum = req.a + req.b;
+      RCCHECK(rcl_send_response(&service, &request_id, &res));
     }
-    sleep(1);
   }
+
+  // geometry_msgs__msg__Twist__init(&twist_msg);
+  // twist_msg.linear.x = 20.0;
+
+  // while (true) {
+  //   RCCHECK(rcl_publish(&ping_publisher, &twist_msg, NULL))
+  //   sleep(1);
+  //   if (rcl_take(&twist_sub, &twist_msg, NULL, NULL) != RMW_RET_OK) {
+  //     rcutils_error_string_t error_str = rcutils_get_error_string();
+  //     rcutils_reset_error();
+  //     printf("Failed to take message: %s\n", error_str.str);
+  //   }
+  //   sleep(1);
+  // }
+
+  // sleep(3);
+
+  // example_interfaces__srv__AddTwoInts_Request__init(&req);
+  // req.a = 10;
+  // req.b = 15;
+
+  // int64_t sequence_number;
+  // RCCHECK(rcl_send_request(&add_two_ints_client, &req, &sequence_number));
+
+  // sleep(3);
+  // rmw_request_id_t request_header;
+  // RCCHECK(rcl_take_response(&add_two_ints_client, &request_header, &res));
+
+  // printf("%d + %d = %d\n", req.a, req.b, res.sum);
 
   // RCCHECK(rclc_executor_init(&executor, &support.context, 10, &allocator))
 
