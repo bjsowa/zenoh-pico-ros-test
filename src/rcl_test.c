@@ -12,8 +12,20 @@
     rcl_ret_t ret = RCL_COMMAND;                                                               \
     if (ret != RCL_RET_OK) {                                                                   \
       printf("Failed status on line %d in file %s: %d. Aborting.\n", __LINE__, __FILE__, ret); \
+      rcutils_error_string_t error_str = rcutils_get_error_string();                           \
+      printf("%s\n", error_str.str);                                                           \
       exit(-1);                                                                                \
     }                                                                                          \
+  }
+
+#define RCSOFTCHECK(RCL_COMMAND)                                                                 \
+  {                                                                                              \
+    rcl_ret_t ret = RCL_COMMAND;                                                                 \
+    if (ret != RCL_RET_OK) {                                                                     \
+      printf("Failed status on line %d in file %s: %d. Continuing.\n", __LINE__, __FILE__, ret); \
+      rcutils_error_string_t error_str = rcutils_get_error_string();                             \
+      printf("%s\n", error_str.str);                                                             \
+    }                                                                                            \
   }
 
 rcl_allocator_t allocator;
@@ -21,33 +33,51 @@ rcl_init_options_t init_options;
 rclc_support_t support;
 rcl_node_t node;
 rcl_node_options_t node_options;
-// rclc_executor_t executor;
-rcl_publisher_t ping_publisher;
-geometry_msgs__msg__Twist twist_msg;
-rcl_subscription_t twist_sub;
-rcl_client_t add_two_ints_client;
-// rcl_timer_t ping_timer;
-// rcl_wait_set_t wait_set;
-example_interfaces__srv__AddTwoInts_Request req;
-example_interfaces__srv__AddTwoInts_Response res;
-
+rclc_executor_t executor;
+rcl_publisher_t publisher;
+rcl_subscription_t subscription;
+rcl_client_t client;
+rcl_timer_t timer;
 rcl_service_t service;
 
-void ping_timer_callback(rcl_timer_t* timer, int64_t last_call_time) {
-  printf("ping\n");
-  // rcl_ret_t rc;
-  // RCLC_UNUSED(last_call_time);
-  // if (timer != NULL) {
-  //   //printf("Timer: time since last call %d\n", (int) last_call_time);
-  //   // rc = rcl_publish(&ping_publisher, &pingNode_ping_msg, NULL);
-  //   if (rc == RCL_RET_OK) {
-  //     printf("Published message %s\n", pingNode_ping_msg.data.data);
-  //   } else {
-  //     printf("timer_callback: Error publishing message %s\n", pingNode_ping_msg.data.data);
-  //   }
-  // } else {
-  //   printf("timer_callback Error: timer parameter is NULL\n");
-  // }
+geometry_msgs__msg__Twist sub_twist_msg;
+example_interfaces__srv__AddTwoInts_Response client_add_two_ints_res;
+example_interfaces__srv__AddTwoInts_Request service_add_two_ints_req;
+example_interfaces__srv__AddTwoInts_Response service_add_two_ints_res;
+
+void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
+  printf("Timer triggered\n");
+
+  printf("Publishing twist\n");
+  geometry_msgs__msg__Twist twist_msg;
+  geometry_msgs__msg__Twist__init(&twist_msg);
+  twist_msg.linear.y = 5.0;
+  RCSOFTCHECK(rcl_publish(&publisher, &twist_msg, NULL))
+
+  printf("Sending service request\n");
+  example_interfaces__srv__AddTwoInts_Request add_two_ints_req;
+  example_interfaces__srv__AddTwoInts_Request__init(&add_two_ints_req);
+  int64_t seq;
+  add_two_ints_req.a = 5;
+  add_two_ints_req.b = 10;
+  RCSOFTCHECK(rcl_send_request(&client, &add_two_ints_req, &seq))
+}
+
+void sub_callback(const void *msgin) {
+  const geometry_msgs__msg__Twist *msg = msgin;
+  printf("Received twist message: %f %f %f\n", msg->linear.x, msg->linear.y, msg->linear.z);
+}
+
+void client_callback(const void *resin) {
+  const example_interfaces__srv__AddTwoInts_Response *res = resin;
+  printf("Received service response: %d\n", res->sum);
+}
+
+void service_callback(const void *reqin, void *resin) {
+  const example_interfaces__srv__AddTwoInts_Request *req = reqin;
+  example_interfaces__srv__AddTwoInts_Response *res = resin;
+  printf("Received service request: %d + %d = ?\n", req->a, req->b);
+  res->sum = req->a + req->b;
 }
 
 int main() {
@@ -55,92 +85,60 @@ int main() {
   init_options = rcl_get_zero_initialized_init_options();
   node = rcl_get_zero_initialized_node();
   node_options = rcl_node_get_default_options();
-  twist_sub = rcl_get_zero_initialized_subscription();
-  add_two_ints_client = rcl_get_zero_initialized_client();
-  // executor = rclc_executor_get_zero_initialized_executor();
-  // ping_timer = rcl_get_zero_initialized_timer();
-  // wait_set = rcl_get_zero_initialized_wait_set();
+  subscription = rcl_get_zero_initialized_subscription();
+  client = rcl_get_zero_initialized_client();
+  executor = rclc_executor_get_zero_initialized_executor();
+  timer = rcl_get_zero_initialized_timer();
   service = rcl_get_zero_initialized_service();
 
+  geometry_msgs__msg__Twist__init(&sub_twist_msg);
+  example_interfaces__srv__AddTwoInts_Request__init(&service_add_two_ints_req);
+  example_interfaces__srv__AddTwoInts_Response__init(&service_add_two_ints_res);
+  example_interfaces__srv__AddTwoInts_Response__init(&client_add_two_ints_res);
+
+  // Init options
   RCCHECK(rcl_init_options_init(&init_options, allocator))
+
+  // Support
   RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator))
+
+  // Node
   RCCHECK(rclc_node_init_with_options(&node, "rcl_test", "", &support, &node_options))
 
-  printf("Node initialized!\n");
+  // Executor
+  RCCHECK(rclc_executor_init(&executor, &support.context, 10, &allocator))
 
-  // RCCHECK(rclc_publisher_init_best_effort(
-  // &ping_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "ping"))
+  // Publisher
+  RCCHECK(rclc_publisher_init_best_effort(
+      &publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "ping"))
 
-  // RCCHECK(rclc_subscription_init_default(
-  // &twist_sub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "~/sub"));
+  // Subscription
+  RCCHECK(rclc_subscription_init_default(
+      &subscription, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "~/sub"));
+  RCCHECK(rclc_executor_add_subscription(&executor, &subscription, &sub_twist_msg, sub_callback,
+                                         ON_NEW_DATA))
 
-  // RCCHECK(rclc_client_init_default(&add_two_ints_client, &node,
-  //                                  ROSIDL_GET_SRV_TYPE_SUPPORT(example_interfaces, srv,
-  //                                  AddTwoInts),
-  //                                  "/add_two_ints"));
+  // Client
+  RCCHECK(rclc_client_init_default(&client, &node,
+                                   ROSIDL_GET_SRV_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts),
+                                   "/add_two_ints"));
+  RCCHECK(rclc_executor_add_client(&executor, &client, &client_add_two_ints_res, client_callback))
 
-  example_interfaces__srv__AddTwoInts_Request__init(&req);
-  example_interfaces__srv__AddTwoInts_Response__init(&res);
+  // Service
   RCCHECK(rclc_service_init_default(
       &service, &node, ROSIDL_GET_SRV_TYPE_SUPPORT(example_interfaces, srv, AddTwoInts),
-      "add_two_ints"));
+      "/add_two_ints"));
+  RCCHECK(rclc_executor_add_service(&executor, &service, &service_add_two_ints_req,
+                                    &service_add_two_ints_res, service_callback))
 
-  while (true) {
-    sleep(1);
-    rmw_request_id_t request_id;
-    if (rcl_take_request(&service, &request_id, &req) != RMW_RET_OK) {
-      rcutils_error_string_t error_str = rcutils_get_error_string();
-      rcutils_reset_error();
-      printf("Failed to take request: %s\n", error_str.str);
-    } else {
-      printf("Received request\n");
-      res.sum = req.a + req.b;
-      RCCHECK(rcl_send_response(&service, &request_id, &res));
-    }
-  }
+  // Timer
+  RCCHECK(rclc_timer_init_default2(&timer, &support, RCL_MS_TO_NS(1500), timer_callback, true));
+  RCCHECK(rclc_executor_add_timer(&executor, &timer));
 
-  // geometry_msgs__msg__Twist__init(&twist_msg);
-  // twist_msg.linear.x = 20.0;
+  // Preallocate executor
+  RCCHECK(rclc_executor_prepare(&executor))
 
-  // while (true) {
-  //   RCCHECK(rcl_publish(&ping_publisher, &twist_msg, NULL))
-  //   sleep(1);
-  //   if (rcl_take(&twist_sub, &twist_msg, NULL, NULL) != RMW_RET_OK) {
-  //     rcutils_error_string_t error_str = rcutils_get_error_string();
-  //     rcutils_reset_error();
-  //     printf("Failed to take message: %s\n", error_str.str);
-  //   }
-  //   sleep(1);
-  // }
-
-  // sleep(3);
-
-  // example_interfaces__srv__AddTwoInts_Request__init(&req);
-  // req.a = 10;
-  // req.b = 15;
-
-  // int64_t sequence_number;
-  // RCCHECK(rcl_send_request(&add_two_ints_client, &req, &sequence_number));
-
-  // sleep(3);
-  // rmw_request_id_t request_header;
-  // RCCHECK(rcl_take_response(&add_two_ints_client, &request_header, &res));
-
-  // printf("%d + %d = %d\n", req.a, req.b, res.sum);
-
-  // RCCHECK(rclc_executor_init(&executor, &support.context, 10, &allocator))
-
-  // RCCHECK(rclc_timer_init_default2(&ping_timer, &support, RCL_MS_TO_NS(1000),
-  // ping_timer_callback, true));
-
-  // RCCHECK(rcl_wait_set_init(&wait_set, 0, 0, 1, 0, 0, 0, &support.context, allocator))
-  // RCCHECK(rclc_executor_add_timer(&executor, &ping_timer))
-
-  // RCCHECK(rclc_executor_prepare(&executor))
-
-  // rclc_executor_spin(&executor);
-
-  // rcl_timer_call(&)
+  rclc_executor_spin(&executor);
 
   return 0;
 }
